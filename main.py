@@ -4,8 +4,8 @@ import os
 DB_PATH = os.environ.get('DB_NAME')
 
 if DB_PATH is None:
-    print("Database name not set. Please set the DB_NAME environment variable.")
-    print("Do $DB_NAME = ('Enter your database name here, add .db at the end')")
+    print("Database name not set. Please set the DB_NAME environment variable")
+    print("Do $DB_NAME = 'Enter your database name here, add .db at the end'")
 else:
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
