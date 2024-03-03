@@ -48,3 +48,9 @@ if response.lower() == 'login':
     loginUser()
 elif response.lower() == 'register':
     registerUser()
+
+
+
+
+#conn.commit() # if you want to save changes to the db
+conn.close()	
