@@ -2,11 +2,16 @@
 # CMPUT 291 Mini Project 1 - Winter 2024  
 Group member names and ccids (3-4 members)  
   jgourley, Jared Gourley 
-  ccid2, name2  
-  ccid3, name2  
+  dricmoy, Dricmoy Bhattacharjee  
+  ccid3, name2 
+  ccid4, name3
 
 # Group work break-down strategy
-Please add
+Go over submission requirements as a group
+Assign someone to write the work break-down and ensure code execution guide is provided
+Create a test db for the queries <- one man job
+Python script to execute <- Initial commit, make branches and work on it individually, review changes as a group when merging pull requests
+Write tests for functions if time allows <- do it as group if possible, or two people take the job
 
 # Code execution guide
 Please add
