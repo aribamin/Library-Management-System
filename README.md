@@ -3,7 +3,7 @@
 Group member names and ccids (3-4 members)  
   jgourley, Jared Gourley. 
   dricmoy, Dricmoy Bhattacharjee.  
-  ccid3, name2 
+  arib1, Arib Amin. 
   ccid4, name3
 
 # Group work break-down strategy
