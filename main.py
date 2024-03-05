@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+import getpass
 
 # GLOBAL VARIABLES
 if len(sys.argv) != 2:
@@ -34,7 +35,7 @@ def executeQuery(query: str, parameters: dict) -> list:
 def loginUser():
     global LOGGED_IN_USER
     emailVar = input("Enter your email: ")
-    passwordVar = input("Enter your password: ")
+    passwordVar = getpass.getpass("Enter your password: ")
 
     login_query = 'SELECT * FROM members WHERE email=? AND passwd=?'
     login_parameters = (emailVar, passwordVar)
@@ -50,13 +51,13 @@ def loginUser():
 def registerUser():
     name = input("Enter your name: ")
     email = input("Enter a unique email: ")
-    birth_year = int(input("Enter your birth year: "))
+    birth_year = int(input("Enter your birth year: ")) # COULD CRASH, FIX
     faculty_name = input("Enter your faculty name: ")
-    password = input("Create a password: ")
+    password = getpass.getpass("Create a password: ")
 
     # Check if the email is already registered
     check_email_query = 'SELECT * FROM members WHERE email=?'
-    check_email_parameters = (email)
+    check_email_parameters = (email,) # must be tuple
     
     existing_user = executeQuery(check_email_query, check_email_parameters)
 
@@ -65,7 +66,7 @@ def registerUser():
     else:
         # Insert new user into the database
         register_query = '''
-            INSERT INTO members (name, email, birth_year, faculty_name, passwd)
+            INSERT INTO members (name, email, byear, faculty, passwd)
             VALUES (?, ?, ?, ?, ?)
         '''
         register_parameters = (name, email, birth_year, faculty_name, password)
