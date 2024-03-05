@@ -51,7 +51,11 @@ def loginUser():
 def registerUser():
     name = input("Enter your name: ")
     email = input("Enter a unique email: ")
-    birth_year = int(input("Enter your birth year: ")) # COULD CRASH, FIX
+    try:
+        birth_year = int(input("Enter your birth year: "))
+    except:
+        print("Invalid age, registration stopped.\n")
+        return
     faculty_name = input("Enter your faculty name: ")
     password = getpass.getpass("Create a password: ")
 
@@ -76,6 +80,21 @@ def registerUser():
         print("Signup successful! You can now login.")
 
 
+
+
+
+
+
+def searchBooks():
+    pass
+    '''
+
+    '''
+
+
+
+
+
 def doAction(action):
     #match actionVar:
     #    case 'view info':
@@ -88,6 +107,8 @@ def doAction(action):
         pass
     elif action == 'view borrowings':
         pass
+    elif action == 'search books':
+        searchBooks()
 
 
 
@@ -116,7 +137,7 @@ response = ''
 validResponse = False
 while response != 'quit':
     response = input("What would you like to do? ")
-    if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty']:
+    if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty', 'search books']:
         print('alright we\'ll do that for you then (program the doing it for them)')
         doAction(response)
     elif response != 'quit':

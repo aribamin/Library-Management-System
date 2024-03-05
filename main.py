@@ -51,7 +51,11 @@ def loginUser():
 def registerUser():
     name = input("Enter your name: ")
     email = input("Enter a unique email: ")
-    birth_year = int(input("Enter your birth year: ")) # COULD CRASH, FIX
+    try:
+        birth_year = int(input("Enter your birth year: "))
+    except:
+        print("Invalid age, registration stopped.\n")
+        return
     faculty_name = input("Enter your faculty name: ")
     password = getpass.getpass("Create a password: ")
 
