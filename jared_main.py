@@ -86,9 +86,62 @@ def registerUser():
 
 
 def searchBooks():
-    pass
+    keyword = 'temp'
+    '''
+    SELECT * FROM books
+    WHERE title LIKE %(:keyword)% OR author LIKE %(:keyword)%
+    AND RANK <= 5 * :pagenum AND RANK > 5 * (:pagenum - 1)
+    ORDER BY _____
     '''
 
+    '''
+    WITH RankedBooks AS (
+        SELECT
+            book_id,
+            title,
+            author,
+            pyear,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN 1
+                        ELSE 2
+                    END,
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN title
+                        ELSE author
+                    END
+            ) AS RowNum
+        FROM books
+        WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
+    )
+    SELECT * FROM RankedBooks
+    WHERE RowNum > 5 * (:pagenum - 1) AND RowNum <= 5 * :pagenum;
+    '''
+
+    f'''
+    WITH RankedBooks AS (
+        SELECT
+            book_id,
+            title,
+            author,
+            pyear,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE
+                        WHEN title LIKE '%' || 'hokage' || '%' THEN 1
+                        ELSE 2
+                    END,
+                    CASE
+                        WHEN title LIKE '%' || 'hokage' || '%' THEN LOWER(title)
+                        ELSE LOWER(author)
+                    END
+            ) AS RowNum
+        FROM books
+        WHERE title LIKE '%' || 'hokage' || '%' OR author LIKE '%' || 'hokage' || '%'
+    )
+    SELECT * FROM RankedBooks
+    WHERE RowNum > 5 * (3 - 1) AND RowNum <= 5 * 3;
     '''
 
 
