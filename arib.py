@@ -178,7 +178,6 @@ def searchBooks():
 
 
 
-
 def doAction(action):
     #match actionVar:
     #    case 'view info':
