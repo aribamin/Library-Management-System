@@ -79,6 +79,16 @@ def registerUser():
         conn.commit()
         print("Signup successful! You can now login.")
 
+#-----------------------PART 1 starts HERE-------------------------------------------------
+#-----------------------PART 1 ends HERE-------------------------------------------------
+
+#-----------------------PART 2 starts HERE-------------------------------------------------
+#-----------------------PART 2 ends HERE-------------------------------------------------
+
+#-----------------------PART 3 starts HERE-------------------------------------------------
+#-----------------------PART 3 starts HERE-------------------------------------------------
+
+#-----------------------PART 4 starts HERE-------------------------------------------------
 def any_unpaid(user_email):
     """
     Display a list of unpaid penalties for the given user or return false if there is no unpaid penalties.
@@ -161,6 +171,7 @@ def pay_penalty(user_email):
     elif quit.lower() == 'y':
         print()
         return
+#-----------------------PART 4 ENDS HERE-------------------------------------------------        
         
 def doAction(action):
     #match actionVar:
@@ -204,7 +215,7 @@ while LOGGED_IN_USER is None:
 response = ''
 validResponse = False
 while response != 'quit':
-    print("Menu: \n1) view info\n2) view borrowings\n3) search books\n4) pay penalty\n")
+    print("Menu: \n-view info\n-view borrowings\n-search books\n-pay penalty\n")
     
     response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
     
