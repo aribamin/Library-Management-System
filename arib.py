@@ -30,7 +30,6 @@ executeQuery(exampleQuery, exampleParameters)
 def viewMemberProfile():
     if LOGGED_IN_USER is None:
         print("You must be logged in to view your profile.")
-        return
 
     # Fetch personal information
     personal_info_query = 'SELECT name, email, byear FROM members WHERE email=?'
@@ -58,16 +57,6 @@ def viewMemberProfile():
     print(f"Name: {personal_info[0][0]}\nEmail: {personal_info[0][1]}\nBirth Year: {personal_info[0][2]}")
     print(f"Previous Borrowings: {borrowing_info[0][0]}, Current Borrowings: {borrowing_info[0][1]}, Overdue Borrowings: {borrowing_info[0][2]}")
     print(f"Unpaid Penalties: {penalty_info[0][0]}, Total Debt on Penalties: {penalty_info[0][1] if penalty_info[0][1] else 0}")
-
-# Integration with doAction function
-def doAction(action):
-    if action == 'view info':
-        viewMemberProfile()
-    elif action == 'view borrowings':
-        # Implementation for viewing borrowings
-        pass
-    elif action == 'search books':
-        searchBooks()
 
 def executeQuery(query: str, parameters: dict) -> list:
     c.execute(query, parameters)
@@ -199,7 +188,7 @@ def doAction(action):
 
     # so apparently our python is too outdated to use match case on lab machines
     if action == 'view info':
-        pass
+        viewMemberProfile()
     elif action == 'view borrowings':
         pass
     elif action == 'search books':
