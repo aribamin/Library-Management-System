@@ -14,6 +14,6 @@ Python script to execute <- Initial commit, make branches and work on it individ
 Write tests for functions if time allows <- do it as group if possible, or two people take the job
 
 # Code execution guide
-Please add
+- Python3 main.py "enter db name with .db to end"
 
 # Names of anyone you have collaborated with (as much as it is allowed within the course policy) or a line saying that you did not collaborate with anyone else.  
