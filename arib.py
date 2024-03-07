@@ -80,6 +80,74 @@ def registerUser():
         print("Signup successful! You can now login.")
 
 
+
+
+
+
+
+def searchBooks():
+    keyword = 'temp'
+    '''
+    SELECT * FROM books
+    WHERE title LIKE %(:keyword)% OR author LIKE %(:keyword)%
+    AND RANK <= 5 * :pagenum AND RANK > 5 * (:pagenum - 1)
+    ORDER BY _____
+    '''
+
+    '''
+    WITH RankedBooks AS (
+        SELECT
+            book_id,
+            title,
+            author,
+            pyear,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN 1
+                        ELSE 2
+                    END,
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN title
+                        ELSE author
+                    END
+            ) AS RowNum
+        FROM books
+        WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
+    )
+    SELECT * FROM RankedBooks
+    WHERE RowNum > 5 * (:pagenum - 1) AND RowNum <= 5 * :pagenum;
+    '''
+
+    f'''
+    WITH RankedBooks AS (
+        SELECT
+            book_id,
+            title,
+            author,
+            pyear,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE
+                        WHEN title LIKE '%' || 'hokage' || '%' THEN 1
+                        ELSE 2
+                    END,
+                    CASE
+                        WHEN title LIKE '%' || 'hokage' || '%' THEN LOWER(title)
+                        ELSE LOWER(author)
+                    END
+            ) AS RowNum
+        FROM books
+        WHERE title LIKE '%' || 'hokage' || '%' OR author LIKE '%' || 'hokage' || '%'
+    )
+    SELECT * FROM RankedBooks
+    WHERE RowNum > 5 * (3 - 1) AND RowNum <= 5 * 3;
+    '''
+
+
+
+
+
 def doAction(action):
     #match actionVar:
     #    case 'view info':
@@ -92,6 +160,8 @@ def doAction(action):
         pass
     elif action == 'view borrowings':
         pass
+    elif action == 'search books':
+        searchBooks()
 
 
 
@@ -120,7 +190,7 @@ response = ''
 validResponse = False
 while response != 'quit':
     response = input("What would you like to do? ")
-    if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty']:
+    if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty', 'search books']:
         print('alright we\'ll do that for you then (program the doing it for them)')
         doAction(response)
     elif response != 'quit':
