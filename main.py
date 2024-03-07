@@ -79,7 +79,89 @@ def registerUser():
         conn.commit()
         print("Signup successful! You can now login.")
 
+def any_unpaid(user_email):
+    """
+    Display a list of unpaid penalties for the given user or return false if there is no unpaid penalties.
+    input: user_email
+    """
+    unpaid_query = 'SELECT * FROM penalties WHERE bid IN ' \
+                    '(SELECT bid FROM borrowings WHERE member = ?) ' \
+                    'AND paid_amount < amount'
+    unpaid_param = (user_email,)
 
+    unpaid_penalties = executeQuery(unpaid_query, unpaid_param)
+
+    if unpaid_penalties:
+        print("Unpaid Penalties:")
+        for penalty in unpaid_penalties:
+            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]}")
+    else:
+        print("No unpaid penalties.\n")
+        return False    
+    return True
+
+def pay_penalty(user_email):
+    """
+    Allow the user to select a penalty and pay it partially or in full.
+    """
+    if any_unpaid(user_email):
+
+        penalty_id = input("Enter the ID of the penalty you want to pay: ")
+
+        # Validate penalty_id
+        if not penalty_id.isdigit():
+            print("Invalid ID. ID must be a digit")
+            quit = input("Back to menu? (y/n): ")
+            if quit.lower() == 'n':
+                print()
+                pay_penalty(user_email)
+            elif quit.lower() == 'y':
+                print()
+                return
+
+        penalty_id = int(penalty_id)
+
+        get_penalty_query = 'SELECT * FROM penalties WHERE pid = ? AND bid IN ' \
+                            '(SELECT bid FROM borrowings WHERE member = ?) ' \
+                            'AND paid_amount < amount'
+        get_penalty_parameters = (penalty_id, user_email)
+
+        penalty = executeQuery(get_penalty_query, get_penalty_parameters)
+
+        if penalty:
+            remaining_amount = penalty[0][2] - penalty[0][3]
+
+            amount_to_pay = input(f"Remaining amount for Penalty ID {penalty_id}: ${remaining_amount:.2f}. "
+                                "Enter the amount to pay: ")
+
+            # Validate amount_to_pay
+            try:
+                amount_to_pay = float(amount_to_pay)
+                if 0 < amount_to_pay <= remaining_amount:
+                    update_penalty_query = 'UPDATE penalties SET paid_amount = paid_amount + ? WHERE pid = ?'
+                    update_penalty_parameters = (amount_to_pay, penalty_id)
+
+                    executeQuery(update_penalty_query, update_penalty_parameters)
+                    conn.commit()
+
+                    print(f"Payment successful! Remaining amount for Penalty ID {penalty_id}: ${(remaining_amount - amount_to_pay):.2f}")
+                else:
+                    print("Invalid amount. Please enter a valid amount within the remaining penalty.")
+            except ValueError:
+                print("Invalid amount. Please enter a valid numeric amount.")
+        else:
+            print("The Penalty ID entered might not exist or has been paid for already")
+    else:
+        return
+    
+    quit = input("Back to menu? (y/n): ")
+    if quit.lower() == 'n':
+        print()
+        pay_penalty(user_email)
+    elif quit.lower() == 'y':
+        print()
+        return
+        
 def doAction(action):
     #match actionVar:
     #    case 'view info':
@@ -92,7 +174,10 @@ def doAction(action):
         pass
     elif action == 'view borrowings':
         pass
-
+    elif action == 'search books':
+        pass
+    elif action == 'pay penalty':
+        pay_penalty(LOGGED_IN_USER)
 
 
 # -------------------------------- MAIN --------------------------------------
@@ -119,7 +204,10 @@ while LOGGED_IN_USER is None:
 response = ''
 validResponse = False
 while response != 'quit':
-    response = input("What would you like to do? ")
+    print("Menu: \n1) view info\n2) view borrowings\n3) search books\n4) pay penalty\n")
+    
+    response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
+    
     if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty']:
         print('alright we\'ll do that for you then (program the doing it for them)')
         doAction(response)

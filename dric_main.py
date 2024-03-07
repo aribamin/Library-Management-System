@@ -221,5 +221,3 @@ print('the end')
 
 #conn.commit() # if you want to save changes to the db
 conn.close()	
-
-
