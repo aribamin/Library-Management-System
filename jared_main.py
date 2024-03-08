@@ -133,18 +133,56 @@ def searchBooks():
                         ELSE 2
                     END,
                     CASE
-                        WHEN title LIKE '%' || 'hokage' || '%' THEN LOWER(title)
-                        ELSE LOWER(author)
+                        WHEN title LIKE '%' || 'hokage' || '%' THEN title
+                        ELSE author
                     END
             ) AS RowNum
         FROM books
         WHERE title LIKE '%' || 'hokage' || '%' OR author LIKE '%' || 'hokage' || '%'
     )
-    SELECT * FROM RankedBooks
+    SELECT b.book_id, title, author, pyear, RowNum, rating, 
+    (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
+    FROM RankedBooks b
+    LEFT JOIN (
+        /* Finds the avg rating per book */
+        SELECT book_id, IFNULL(AVG(rating), 0) AS rating
+        FROM reviews
+        GROUP BY book_id) ratings
+    ON ratings.book_id=b.book_id
+    LEFT JOIN (
+        /* Gets all books that are currently borrowed */
+        SELECT books.book_id, 'BORROWED' as borrowed
+            FROM books
+            INNER JOIN borrowings brrw
+            ON brrw.book_id=books.book_id
+            WHERE end_date IS NULL) in_use
+    ON in_use.book_id=b.book_id
     WHERE RowNum > 5 * (3 - 1) AND RowNum <= 5 * 3;
     '''
 
 
+
+''' temp query to check if a book is currently borrowed
+/* Gets all books that are currently borrowed */
+SELECT books.book_id, 'BORROWED' as borrowed
+    FROM books
+    INNER JOIN borrowings brrw
+    ON brrw.book_id=books.book_id
+    WHERE end_date IS NULL;
+
+
+
+
+
+SELECT b1.book_id, b1.title, b1.author, b1.pyear, end_date FROM books b1
+LEFT JOIN (
+    SELECT books.book_id, 'BORROWED' as borrowed
+    FROM books
+    INNER JOIN borrowings brrw
+    ON brrw.book_id=books.book_id
+    WHERE end_date IS NULL) in_use
+    ON in_use.book_id=b1.book_id;
+'''
 
 
 

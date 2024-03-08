@@ -2,10 +2,11 @@ import sqlite3
 import sys
 import getpass
 
-# GLOBAL VARIABLES
 if len(sys.argv) != 2:
     print("Usage: python3 main.py <database_name>")
     sys.exit(1)
+
+#  ------------------------ GLOBAL VARIABLES ---------------------------------
 
 DB_PATH = sys.argv[1]
 
@@ -13,8 +14,9 @@ conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
 
 LOGGED_IN_USER = None
+# ----------------------------------------------------------------------------
 
-# Could be useful to run queries easier in the program
+
 '''
 A function to execute a query giving a query and set of parameters and return
 the results as a list of tuples.
@@ -86,7 +88,64 @@ def registerUser():
 #-----------------------PART 2 ends HERE-------------------------------------------------
 
 #-----------------------PART 3 starts HERE-------------------------------------------------
-#-----------------------PART 3 starts HERE-------------------------------------------------
+def searchBooks(userEmail):
+    queryOfPain = '''
+    WITH RankedBooks AS (
+        SELECT
+            book_id,
+            title,
+            author,
+            pyear,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN 1
+                        ELSE 2
+                    END,
+                    CASE
+                        WHEN title LIKE '%' || :keyword || '%' THEN title
+                        ELSE author
+                    END
+            ) AS RowNum
+        FROM books
+        WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
+    )
+    /* Select the books from RankedBooks and then join more info onto the rows */
+    SELECT b.book_id, title, author, pyear, RowNum, rating, 
+    (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
+    FROM RankedBooks b
+    LEFT JOIN (
+        /* Finds the avg rating per book */
+        SELECT book_id, IFNULL(AVG(rating), 0) AS rating
+        FROM reviews
+        GROUP BY book_id) ratings
+    ON ratings.book_id=b.book_id
+    LEFT JOIN (
+        /* Gets all books that are currently borrowed */
+        SELECT books.book_id, 'BORROWED' as borrowed
+            FROM books
+            INNER JOIN borrowings brrw
+            ON brrw.book_id=books.book_id
+            WHERE end_date IS NULL) in_use
+    ON in_use.book_id=b.book_id
+    WHERE RowNum > 5 * (:page - 1) AND RowNum <= 5 * :page;
+    '''
+    # Now for the real function
+    keyword = input('Enter a search keyword to find books of: ')
+    pageNum = 1
+
+    queryParams = {'keyword': keyword, 'page': pageNum}
+
+    results = executeQuery(queryOfPain, queryParams)
+    #print(results) #temp
+    for row in results:
+        print(row) # still somewhat temp
+
+    # Next, ask to see another page (should we have a way to know the number of total results?)
+
+    # Also there needs to be a prompt to be able to borrow any book there (if possible)
+
+#-----------------------PART 3 ends HERE-------------------------------------------------
 
 #-----------------------PART 4 starts HERE-------------------------------------------------
 def any_unpaid(user_email):
@@ -171,22 +230,15 @@ def pay_penalty(user_email):
     elif quit.lower() == 'y':
         print()
         return
-#-----------------------PART 4 ENDS HERE-------------------------------------------------        
+#--------------------------- PART 4 ENDS HERE --------------------------------        
         
 def doAction(action):
-    #match actionVar:
-    #    case 'view info':
-    #        pass #do things
-    #    case 'view borrowings':
-    #        pass #you get the idea
-
-    # so apparently our python is too outdated to use match case on lab machines
     if action == 'view info':
         pass
     elif action == 'view borrowings':
         pass
     elif action == 'search books':
-        pass
+        searchBooks(LOGGED_IN_USER)
     elif action == 'pay penalty':
         pay_penalty(LOGGED_IN_USER)
 

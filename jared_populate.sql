@@ -33,7 +33,9 @@ INSERT INTO borrowings (bid, member, book_id, start_date, end_date)
 VALUES 
   (1, 'naruto@example.com', 1, '2024-02-01', '2024-02-15'),
   (2, 'sasuke@example.com', 2, '2024-02-05', '2024-02-20'),
-  (3, 'sakura@example.com', 3, '2024-02-10', '2024-02-25');
+  (3, 'sakura@example.com', 3, '2024-02-10', '2024-02-25'),
+  (4, 'naruto@example.com', 1, '2024-02-17', '2024-03-01'),
+  (5, 'naruto@example.com', 1, '2024-03-05', NULL);
 
 
 INSERT INTO penalties (pid, bid, amount, paid_amount)
@@ -46,5 +48,6 @@ VALUES
 INSERT INTO reviews (rid, book_id, member, rating, rtext, rdate)
 VALUES 
   (1, 1, 'naruto@example.com', 5, 'Believe it!', '2024-02-12'),
-  (2, 2, 'sasuke@example.com', 4, 'Intriguing insights into the Uchiha clan.', '2024-02-18'),
-  (3, 3, 'sakura@example.com', 3, 'Useful medical techniques.', '2024-02-22');
+  (2, 1, 'naruto@example.com', 3.5, 'Believe it!', '2024-04-16'),
+  (3, 2, 'sasuke@example.com', 4, 'Intriguing insights into the Uchiha clan.', '2024-02-18'),
+  (4, 3, 'sakura@example.com', 3, 'Useful medical techniques.', '2024-02-22');
