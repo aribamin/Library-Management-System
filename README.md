@@ -17,3 +17,4 @@ Write tests for functions if time allows <- do it as group if possible, or two p
 - Python3 main.py "enter db name add .db to end"
 
 # Names of anyone you have collaborated with (as much as it is allowed within the course policy) or a line saying that you did not collaborate with anyone else.  
+Jared - I received some advice from a TA (Farishta) with writing my SQL query for the Search Books function, particularly with how to write the ORDER BY clause to sort the results properly.
