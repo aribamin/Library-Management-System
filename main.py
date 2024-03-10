@@ -1,6 +1,7 @@
 import sqlite3
 import sys
 import getpass
+import math
 
 if len(sys.argv) != 2:
     print("Usage: python3 main.py <database_name>")
@@ -51,8 +52,15 @@ def loginUser():
         print("Invalid email or password. Please try again.")
 
 def registerUser():
+    
     name = input("Enter your name: ")
+    if name == '':
+        print('Name cannot be left blank, registration cancelled\n')
+        return
     email = input("Enter a unique email: ")
+    if email == '':
+        print('Email cannot be left blank, registration cancelled\n')
+        return
     try:
         birth_year = int(input("Enter your birth year: "))
     except:
@@ -60,6 +68,9 @@ def registerUser():
         return
     faculty_name = input("Enter your faculty name: ")
     password = getpass.getpass("Create a password: ")
+    if password == '':
+        print('Password cannot be left blank, registration cancelled\n')
+        return
 
     # Check if the email is already registered
     check_email_query = 'SELECT * FROM members WHERE email=?'
@@ -88,7 +99,94 @@ def registerUser():
 #-----------------------PART 2 ends HERE-------------------------------------------------
 
 #-----------------------PART 3 starts HERE-------------------------------------------------
+def printAndSortResults(results, totalResults, pageNum):
+    #print(f'\n{totalResults} results found, showing {5 * pageNum - 4} to {min(totalResults, 5 * pageNum)}')
+    print(f'\n{totalResults} results found, showing page {pageNum} of {math.ceil(totalResults / 5)}')
+    print('%7s | %30s | %30s | %4s | %10s | %10s' % ('Book ID', 'Title'.center(30), 'Author'.center(30), 'Year', 'Avg Rating', 'Available?'))
+    borrowables = []
+    booksOnScreen = []
+    for row in results:
+        print('%7d | %30s | %30s | %4d | %10d | %10s' % (row[0], row[1], row[2], row[3], row[4], row[6]))
+        booksOnScreen.append(row[0])
+        if row[6] == 'Available':
+            borrowables.append(row[0])
+    return (booksOnScreen, borrowables)
+
+
+
+def borrowBook(bookID, booksOnScreen, borrowables):
+    if bookID in borrowables:
+        print('ayo borrow this book!!!!', bookID) # SOMEONE WRITE THIS
+        # will need to do an insert into borrowings statement here
+        return True
+    elif bookID in booksOnScreen:
+        print('This book is currently being borrowed!')
+        return False
+    else:
+        print('This book isn\'t being shown in the list currently!')
+        return False
+
+printOtherText = True
+def getOtherResponse(curPage, totalResults):
+    '''
+    Return value 0 signals flip page, return value 1 signals search, 2 signals borrow, 3 signals return
+    '''
+    maxPages = math.ceil(totalResults / 5)
+    global printOtherText
+    if printOtherText:
+        print("\nOptions: \n-page x (flips to page x)\n-next (flips to next page)\n-prev (flips to previous page)\n-borrow x (borrows book with ID x)\n-search (prompts for a new search)\n")
+    printOtherText = True
+
+    while True:
+        response = input('Choose a menu option or \'return\' to exit: ').lower()
+
+        if 'page' in response:
+            try:
+                pageNumber = int(response.split()[-1])
+                if pageNumber >= 1 and pageNumber <= maxPages:
+                    return [0, pageNumber]
+                else:
+                    print('Invalid page number (not within the existing range)')
+            except:
+                print('Invalid page number (not an integer)')
+        elif response == 'next':
+            if curPage + 1 <= maxPages:
+                return [0, curPage + 1]
+            else:
+                print('No more pages after this one')
+        elif response == 'prev':
+            if curPage - 1 >= 1:
+                return [0, curPage - 1]
+            else:
+                print('No more pages before this one')
+        elif 'borrow' in response:
+            try:
+                bookID = int(response.split()[-1])
+                printOtherText = False
+                return [2, bookID]
+            except:
+                print('Unable to read book ID (not an integer)')
+        elif response == 'search':
+            return [1]
+        elif response == 'return':
+            return [3,]
+        else:
+            print('Unable to read command, try again')
+            
+
+
+def getRetryResponse():
+    while True:
+        response = input('No books found, want to return to main menu? (y/n): ').lower()
+        if response == 'y':
+            return False
+        elif response == 'n':
+            return True
+        else:
+            print("Invalid option, input 'y' or 'n'")
+
 def searchBooks(userEmail):
+    global printOtherText
     queryOfPain = '''
     WITH RankedBooks AS (
         SELECT
@@ -111,7 +209,7 @@ def searchBooks(userEmail):
         WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
     )
     /* Select the books from RankedBooks and then join more info onto the rows */
-    SELECT b.book_id, title, author, pyear, RowNum, rating, 
+    SELECT b.book_id, title, author, pyear, IFNULL(rating, 0), (SELECT COUNT(*) FROM RankedBooks),
     (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
     FROM RankedBooks b
     LEFT JOIN (
@@ -131,19 +229,42 @@ def searchBooks(userEmail):
     WHERE RowNum > 5 * (:page - 1) AND RowNum <= 5 * :page;
     '''
     # Now for the real function
-    keyword = input('Enter a search keyword to find books of: ')
-    pageNum = 1
+    # Provide as many search prompts as desired until a return prompt is received
+    while True:
+        # Initialize the search keyword and run the query
+        keyword = input('Enter a search keyword to find books of: ')
+        pageNum = 1
 
-    queryParams = {'keyword': keyword, 'page': pageNum}
+        queryParams = {'keyword': keyword, 'page': pageNum}
+        results = executeQuery(queryOfPain, queryParams)
+        
+        # If some books were found, provide all the options for viewing them
+        if len(results) != 0:
+            totalResults = results[0][5]
+            booksOnScreen, borrowables = printAndSortResults(results, totalResults, pageNum)
 
-    results = executeQuery(queryOfPain, queryParams)
-    #print(results) #temp
-    for row in results:
-        print(row) # still somewhat temp
-
-    # Next, ask to see another page (should we have a way to know the number of total results?)
-
-    # Also there needs to be a prompt to be able to borrow any book there (if possible)
+            # Keep asking to flip page or borrow a book until asked to return
+            while True:
+                choice = getOtherResponse(pageNum, totalResults)
+                if choice[0] == 0: # flip page (requires re-running query)
+                    pageNum = choice[1]
+                    queryParams = {'keyword': keyword, 'page': pageNum}
+                    results = executeQuery(queryOfPain, queryParams)
+                    booksOnScreen, borrowables = printAndSortResults(results, totalResults, pageNum)
+                elif choice[0] == 1: # Choose new search term
+                    break
+                elif choice[0] == 2: # Borrow a book
+                    successfulBorrow = borrowBook(choice[1], booksOnScreen, borrowables)
+                    if successfulBorrow:
+                        printOtherText = True
+                        booksOnScreen, borrowables = printAndSortResults(results, totalResults, pageNum)
+                elif choice[0] == 3: # Return to main menu
+                    return
+        # If no books were found, ask to try again or return to main menu
+        else:
+            if getRetryResponse() == False:
+                return
+            
 
 #-----------------------PART 3 ends HERE-------------------------------------------------
 
@@ -272,7 +393,6 @@ while response != 'quit':
     response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
     
     if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty']:
-        print('alright we\'ll do that for you then (program the doing it for them)')
         doAction(response)
     elif response != 'quit':
         print("Invalid option")

@@ -85,16 +85,11 @@ def registerUser():
 
 
 
-def searchBooks():
-    keyword = 'temp'
-    '''
-    SELECT * FROM books
-    WHERE title LIKE %(:keyword)% OR author LIKE %(:keyword)%
-    AND RANK <= 5 * :pagenum AND RANK > 5 * (:pagenum - 1)
-    ORDER BY _____
-    '''
-
-    '''
+def searchBooks(userEmail):
+    # Jared - I received some advice from a TA (Farishta) with writing my SQL
+    # query for the Search Books function, particularly with how to write the
+    # ORDER BY clause to sort the results properly.
+    queryOfPain = '''
     WITH RankedBooks AS (
         SELECT
             book_id,
@@ -115,11 +110,27 @@ def searchBooks():
         FROM books
         WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
     )
-    SELECT * FROM RankedBooks
-    WHERE RowNum > 5 * (:pagenum - 1) AND RowNum <= 5 * :pagenum;
-    '''
+    /* Select the books from RankedBooks and then join more info onto the rows */
+    SELECT b.book_id, title, author, pyear, IFNULL(rating, 0), 
+    (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
+    FROM RankedBooks b
+    LEFT JOIN (
+        /* Finds the avg rating per book */
+        SELECT book_id, IFNULL(AVG(rating), 0) AS rating
+        FROM reviews
+        GROUP BY book_id) ratings
+    ON ratings.book_id=b.book_id
+    LEFT JOIN (
+        /* Gets all books that are currently borrowed */
+        SELECT books.book_id, 'BORROWED' as borrowed
+            FROM books
+            INNER JOIN borrowings brrw
+            ON brrw.book_id=books.book_id
+            WHERE end_date IS NULL) in_use
+    ON in_use.book_id=b.book_id
+    WHERE RowNum > 5 * (:page - 1) AND RowNum <= 5 * :page;
 
-    f'''
+
     WITH RankedBooks AS (
         SELECT
             book_id,
@@ -140,7 +151,8 @@ def searchBooks():
         FROM books
         WHERE title LIKE '%' || 'hokage' || '%' OR author LIKE '%' || 'hokage' || '%'
     )
-    SELECT b.book_id, title, author, pyear, RowNum, rating, 
+    /* Select the books from RankedBooks and then join more info onto the rows */
+    SELECT b.book_id, title, author, pyear, IFNULL(rating, 0), (SELECT COUNT(*) FROM RankedBooks),
     (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
     FROM RankedBooks b
     LEFT JOIN (
@@ -157,32 +169,22 @@ def searchBooks():
             ON brrw.book_id=books.book_id
             WHERE end_date IS NULL) in_use
     ON in_use.book_id=b.book_id
-    WHERE RowNum > 5 * (3 - 1) AND RowNum <= 5 * 3;
+    WHERE RowNum > 5 * (1 - 1) AND RowNum <= 5 * 1;
     '''
+    # Now for the real function
+    keyword = input('Enter a search keyword to find books of: ')
+    pageNum = 1
 
+    queryParams = {'keyword': keyword, 'page': pageNum}
 
+    results = executeQuery(queryOfPain, queryParams)
+    #print(results) #temp
+    for row in results:
+        print(row) # still somewhat temp
 
-''' temp query to check if a book is currently borrowed
-/* Gets all books that are currently borrowed */
-SELECT books.book_id, 'BORROWED' as borrowed
-    FROM books
-    INNER JOIN borrowings brrw
-    ON brrw.book_id=books.book_id
-    WHERE end_date IS NULL;
+    # Next, ask to see another page (should we have a way to know the number of total results?)
 
-
-
-
-
-SELECT b1.book_id, b1.title, b1.author, b1.pyear, end_date FROM books b1
-LEFT JOIN (
-    SELECT books.book_id, 'BORROWED' as borrowed
-    FROM books
-    INNER JOIN borrowings brrw
-    ON brrw.book_id=books.book_id
-    WHERE end_date IS NULL) in_use
-    ON in_use.book_id=b1.book_id;
-'''
+    # Also there needs to be a prompt to be able to borrow any book there (if possible)
 
 
 
