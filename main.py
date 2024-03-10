@@ -187,6 +187,9 @@ def getRetryResponse():
 
 def searchBooks(userEmail):
     global printOtherText
+    # Jared - I received some advice from a TA (Farishta) with writing my SQL
+    # query for the Search Books function, particularly with how to write the
+    # ORDER BY clause to sort the results properly.
     queryOfPain = '''
     WITH RankedBooks AS (
         SELECT
