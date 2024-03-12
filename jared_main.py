@@ -106,7 +106,7 @@ def printAndSortResults(results, totalResults, pageNum):
     borrowables = []
     booksOnScreen = []
     for row in results:
-        print('%7d | %30s | %30s | %4d | %10d | %10s' % (row[0], row[1], row[2], row[3], row[4], row[6]))
+        print('%7d | %30s | %30s | %4d | %10s | %10s' % (row[0], row[1], row[2], row[3], row[4], row[6]))
         booksOnScreen.append(row[0])
         if row[6] == 'Available':
             borrowables.append(row[0])
@@ -212,7 +212,7 @@ def searchBooks(userEmail):
         WHERE title LIKE '%' || :keyword || '%' OR author LIKE '%' || :keyword || '%'
     )
     /* Select the books from RankedBooks and then join more info onto the rows */
-    SELECT b.book_id, title, author, pyear, IFNULL(rating, 0), (SELECT COUNT(*) FROM RankedBooks),
+    SELECT b.book_id, title, author, pyear, IFNULL(rating, 'N/A'), (SELECT COUNT(*) FROM RankedBooks),
     (CASE WHEN borrowed='BORROWED' THEN 'Borrowed' ELSE 'Available' END) AS borrowed
     FROM RankedBooks b
     LEFT JOIN (
