@@ -137,71 +137,167 @@ def returnBook():
         print("You must be logged in to return a book.")
         return
 
-    # get user's current borrowings
-    current_borrowings_query = ''' SELECT bid, books.book_id, title, start_date
-    FROM borrowings
-    JOIN books ON books.book_id = borrowings.book_id
-    WHERE member=? AND end_date IS NULL
-    '''
-    borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
-    if not borrowings:
-        print("You have no current borrowings to return.")
-        return
-    
-    for borrowing in borrowings:
-        print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}")
-    
-    bid_to_return = input("Enter the borrowing ID of the book to return: ")
-    selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
-    if not selected_borrowing:
-        print("Invalid borrowing ID.")
-        return
-
-    # get overdue days
-    overdue_days_query = '''
-    SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
-    FROM borrowings
-    WHERE bid=?
-    '''
-    overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
-    if overdue_days_result and overdue_days_result[0][0] > 0:
-        overdue_days = overdue_days_result[0][0] 
-    else:
-        overdue_days = 0
-
-    # apply penalty if overdue
-    if overdue_days > 0:
-        penalty_amount = overdue_days  # $1 per overdue day
-        print(f"Applying a penalty of ${penalty_amount} for the overdue return of {selected_borrowing[2]}.")
-        insert_penalty_query = '''
-        INSERT INTO penalties (bid, amount, paid_amount) VALUES (?, ?, 0)
+    try:
+        # Fetch user's current borrowings
+        current_borrowings_query = ''' SELECT bid, books.book_id, title, start_date
+        FROM borrowings
+        JOIN books ON books.book_id = borrowings.book_id
+        WHERE member=? AND end_date IS NULL
         '''
-        executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
-        conn.commit()
+        borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
+        if not borrowings:
+            print("You have no current borrowings to return.")
+            return
 
-    #book as returned
-    return_book_query = '''
-    UPDATE borrowings 
-    SET end_date=julianday('now') 
-    WHERE bid=?
-    '''
-    executeQuery(return_book_query, (bid_to_return,))
-    conn.commit()
-    print(f"Book '{selected_borrowing[2]}' returned successfully.")
+        print("Your current borrowings:")
+        for borrowing in borrowings:
+            deadline_query = '''SELECT date(start_date, '+20 days') as deadline FROM borrowings WHERE bid=?'''
+            deadline_result = executeQuery(deadline_query, (borrowing[0],))
+            deadline = deadline_result[0][0] if deadline_result else "N/A"
+            print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}, Deadline: {deadline}")
 
-    # Optional: Ask for a review
-    review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
-    if review_decision == 'yes':
-        rating = input("Rating (1-5): ")
-        review_text = input("Review: ")
-        review_date = 'now'  # SQL's CURRENT_TIMESTAMP can also be used in the INSERT query directly
+        #validate bid 
+        bid_to_return = input("Enter the borrowing ID of the book to return: ")
+        selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
+        if not selected_borrowing:
+            print("Invalid borrowing ID.")
+            return
 
-        insert_review_query = '''
-        INSERT INTO reviews (book_id, member, rating, rtext, rdate) VALUES (?, ?, ?, ?, julianday(?))
+        # Calculate overdue days
+        overdue_days_query = '''
+        SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
+        FROM borrowings
+        WHERE bid=?
         '''
-        executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text, review_date))
+        overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
+
+        if overdue_days_result and overdue_days_result[0][0] > 0:
+            overdue_days = overdue_days_result[0][0] 
+        else:
+            overdue_days = 0
+
+        # Apply penalty if overdue
+        if overdue_days > 0:
+            penalty_amount = overdue_days  # $1 per overdue day
+            print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.")
+            insert_penalty_query = '''
+            INSERT INTO penalties (bid, amount, paid_amount) VALUES (?, ?, 0)
+            '''
+            executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
+            conn.commit()
+
+        # Mark the book as returned
+        
+        return_book_query = '''
+        UPDATE borrowings 
+        SET end_date=date('now') 
+        WHERE bid=?
+        '''
+        executeQuery(return_book_query, (bid_to_return,))
         conn.commit()
-        print("Thank you for your review!")
+        print(f"Book '{selected_borrowing[2]}' returned successfully.")
+
+        # Optional: Ask for a review
+        review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
+        if review_decision == 'yes':
+            rating = input("Rating (1-5): ")
+            if not rating.isdigit() or not 1 <= int(rating) <= 5:
+                print("Invalid rating. Please enter a number between 1 and 5.")
+                return
+            review_text = input("Review: ")
+            review_date = 'now'  
+
+            insert_review_query = '''
+            INSERT INTO reviews (book_id, member, rating, rtext, rdate) VALUES (?, ?, ?, ?, julianday(?))
+            '''
+            executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text, review_date))
+            conn.commit()
+            print("Thank you for your review!")
+
+        # Display updated borrowings and penalties tables
+        print("\nUpdated Borrowings Table:")
+        all_borrowings = executeQuery('SELECT * FROM borrowings', ())
+        for borrowing in all_borrowings:
+            print(borrowing)
+
+        print("\nUpdated Penalties Table:")
+        all_penalties = executeQuery('SELECT * FROM penalties', ())
+        for penalty in all_penalties:
+            print(penalty)
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+# def returnBook():
+#     if LOGGED_IN_USER is None:
+#         print("You must be logged in to return a book.")
+#         return
+
+#     # get user's current borrowings
+#     current_borrowings_query = ''' SELECT bid, books.book_id, title, start_date
+#     FROM borrowings
+#     JOIN books ON books.book_id = borrowings.book_id
+#     WHERE member=? AND end_date IS NULL
+#     '''
+#     borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
+#     if not borrowings:
+#         print("You have no current borrowings to return.")
+#         return
+    
+#     for borrowing in borrowings:
+#         print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}")
+    
+#     bid_to_return = input("Enter the borrowing ID of the book to return: ")
+#     selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
+#     if not selected_borrowing:
+#         print("Invalid borrowing ID.")
+#         return
+
+#     # get overdue days
+#     overdue_days_query = '''
+#     SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
+#     FROM borrowings
+#     WHERE bid=?
+#     '''
+#     overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
+#     if overdue_days_result and overdue_days_result[0][0] > 0:
+#         overdue_days = overdue_days_result[0][0] 
+#     else:
+#         overdue_days = 0
+
+#     # apply penalty if overdue
+#     if overdue_days > 0:
+#         penalty_amount = overdue_days  # $1 per overdue day
+#         print(f"Applying a penalty of ${penalty_amount} for the overdue return of {selected_borrowing[2]}.")
+#         insert_penalty_query = '''
+#         INSERT INTO penalties (bid, amount, paid_amount) VALUES (?, ?, 0)
+#         '''
+#         executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
+#         conn.commit()
+
+#     #book as returned
+#     return_book_query = '''
+#     UPDATE borrowings 
+#     SET end_date=julianday('now') 
+#     WHERE bid=?
+#     '''
+#     executeQuery(return_book_query, (bid_to_return,))
+#     conn.commit()
+#     print(f"Book '{selected_borrowing[2]}' returned successfully.")
+
+#     # Optional: Ask for a review
+#     review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
+#     if review_decision == 'yes':
+#         rating = input("Rating (1-5): ")
+#         review_text = input("Review: ")
+#         review_date = 'now'  # SQL's CURRENT_TIMESTAMP can also be used in the INSERT query directly
+
+#         insert_review_query = '''
+#         INSERT INTO reviews (book_id, member, rating, rtext, rdate) VALUES (?, ?, ?, ?, julianday(?))
+#         '''
+#         executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text, review_date))
+#         conn.commit()
+#         print("Thank you for your review!")
 
 #-----------------------PART 2 ends HERE-------------------------------------------------
 
