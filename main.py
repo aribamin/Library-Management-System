@@ -93,6 +93,36 @@ def registerUser():
         print("Signup successful! You can now login.")
 
 #-----------------------PART 1 starts HERE-------------------------------------------------
+def viewMemberProfile():
+    if LOGGED_IN_USER is None:
+        print("You must be logged in to view your profile.")
+
+    # Fetch personal information
+    personal_info_query = 'SELECT name, email, byear FROM members WHERE email=?'
+    personal_info = executeQuery(personal_info_query, (LOGGED_IN_USER,))
+
+    # Fetch borrowing information
+    borrowing_query = '''
+    SELECT
+        (SELECT COUNT(*) FROM borrowings WHERE member=? AND end_date IS NOT NULL) AS previous_borrowings,
+        (SELECT COUNT(*) FROM borrowings WHERE member=? AND end_date IS NULL) AS current_borrowings,
+        (SELECT COUNT(*) FROM borrowings WHERE member=? AND end_date IS NULL AND julianday('now') - julianday(start_date) > 20) AS overdue_borrowings
+    '''
+    borrowing_info = executeQuery(borrowing_query, (LOGGED_IN_USER, LOGGED_IN_USER, LOGGED_IN_USER))
+
+    # Fetch penalty information
+    penalty_query = '''
+    SELECT
+        (SELECT COUNT(*) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND paid_amount < amount) AS unpaid_penalties,
+        (SELECT SUM(amount - paid_amount) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND paid_amount < amount) AS total_debt
+    '''
+    penalty_info = executeQuery(penalty_query, (LOGGED_IN_USER, LOGGED_IN_USER))
+
+    # Print the information
+    print("\nMember Profile:")
+    print(f"Name: {personal_info[0][0]}\nEmail: {personal_info[0][1]}\nBirth Year: {personal_info[0][2]}")
+    print(f"Previous Borrowings: {borrowing_info[0][0]}, Current Borrowings: {borrowing_info[0][1]}, Overdue Borrowings: {borrowing_info[0][2]}")
+    print(f"Unpaid Penalties: {penalty_info[0][0]}, Total Debt on Penalties: {penalty_info[0][1] if penalty_info[0][1] else 0}")
 #-----------------------PART 1 ends HERE-------------------------------------------------
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
@@ -358,7 +388,7 @@ def pay_penalty(user_email):
         
 def doAction(action):
     if action == 'view info':
-        pass
+        viewMemberProfile()
     elif action == 'view borrowings':
         pass
     elif action == 'search books':
