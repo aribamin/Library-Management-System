@@ -176,7 +176,8 @@ def returnBook():
         else:
             overdue_days = 0
 
-        # Apply penalty if overdue
+        # Apply penalty if overdue 
+
         if overdue_days > 0:
             penalty_amount = overdue_days  # $1 per overdue day
             print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.")
@@ -187,17 +188,19 @@ def returnBook():
             conn.commit()
 
         # Mark the book as returned
-        
+
         return_book_query = '''
         UPDATE borrowings 
         SET end_date=date('now') 
         WHERE bid=?
         '''
+
         executeQuery(return_book_query, (bid_to_return,))
         conn.commit()
         print(f"Book '{selected_borrowing[2]}' returned successfully.")
 
-        # Optional: Ask for a review
+        # Optional: Ask for a review    
+        # Generate a unique ID when we insert into reviews table, 1001, or a random number that is not in the table 
         review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
         if review_decision == 'yes':
             rating = input("Rating (1-5): ")
@@ -208,10 +211,12 @@ def returnBook():
             review_date = 'now'  
 
             insert_review_query = '''
-            INSERT INTO reviews (book_id, member, rating, rtext, rdate) VALUES (?, ?, ?, ?, julianday(?))
+                INSERT INTO reviews (book_id, member, rating, rtext, rdate) 
+                VALUES (?, ?, ?, ?, date('now'))
             '''
-            executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text, review_date))
+            executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
             conn.commit()
+
             print("Thank you for your review!")
 
         # Display updated borrowings and penalties tables
@@ -224,6 +229,11 @@ def returnBook():
         all_penalties = executeQuery('SELECT * FROM penalties', ())
         for penalty in all_penalties:
             print(penalty)
+
+        print("\nUpdated Reviews Table:")
+        all_reviews = executeQuery('SELECT * FROM reviews', ())
+        for review in all_reviews:
+            print(review)
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
