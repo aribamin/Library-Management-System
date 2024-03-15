@@ -127,12 +127,7 @@ def viewMemberProfile():
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
 def returnBook():
-    """
-    TO DO
-    make it so that if there isn't a valid response
-    say the say 'ye' when we ask for a review we don't execute the query assuming no review
-    reprompt.
-    """
+
     if LOGGED_IN_USER is None:
         print("You must be logged in to return a book.")
         return
@@ -149,15 +144,15 @@ def returnBook():
         end_date IS NULL
         '''
 
-        #borrowings returns a list
+        # borrowings returns a list
         borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
 
-        #case where user has no borrowings
+        # case where user has no borrowings
         if not borrowings:
             print("You have no current borrowings to return.")
             return
         
-        #print borrowings and calculate the deadline of each one 
+        # print borrowings and calculate the deadline of each one 
         print("Your current borrowings:")
         for borrowing in borrowings:
 
@@ -178,13 +173,12 @@ def returnBook():
             #display bid, book id, title, start date and deadline:
             print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}, Deadline: {deadline}")
 
-        #prompt user if they want to return a book
+        # next prompt user if they want to return a book
         bid_to_return = input("Enter the borrowing ID of the book to return: ")
 
-        #find instance of borrowing
+        #find instance of borrowing in table
         selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
 
-        # REPROMPT INSTEAD 
         if not selected_borrowing:
             print("Invalid borrowing ID.")
             return
@@ -196,15 +190,23 @@ def returnBook():
         WHERE bid=?
         '''
 
+        # returns something like [(19.993999583180994,)] so we need next block
         overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
+        # print(overdue_days_result)
 
-        #get element from list
+        #get element from list 
         if overdue_days_result and overdue_days_result[0][0] > 0:
             overdue_days = overdue_days_result[0][0] 
         else:
             overdue_days = 0
+        
+        #round down 
         overdue_days = math.floor(overdue_days)
-       
+
+        # TESTING OMIT
+        # penalty_amount = overdue_days
+        # print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.") 
+
         # if overdue, apply penalty 
         if overdue_days > 0:
             penalty_amount = overdue_days  # $1 per overdue day
@@ -217,7 +219,7 @@ def returnBook():
             executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
             conn.commit()
 
-        # mark the book as returned
+        # mark the book as returned 
         return_book_query = '''
         UPDATE borrowings 
         SET end_date=date('now') 
@@ -227,28 +229,28 @@ def returnBook():
         executeQuery(return_book_query, (bid_to_return,))
         print(f"Book '{selected_borrowing[2]}' returned successfully.")
 
-        # Optional: Ask for a review    
-        # Generate a unique ID when we insert into reviews table, 1001, or a random number that is not in the table 
-        # should work? 
+        # ask for a review with the option to decline
+        while True:
+            review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
+            if review_decision == 'yes':
+                rating = input("Rating (1-5): ")
+                if not rating.isdigit() or not 1 <= int(rating) <= 5:
+                    print("Invalid rating. Please enter a number between 1 and 5.")
+                    continue
+                review_text = input("Review: ")
 
-        #REPROMPT
-        review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
-        if review_decision == 'yes':
-            rating = input("Rating (1-5): ")
-            if not rating.isdigit() or not 1 <= int(rating) <= 5:
-                print("Invalid rating. Please enter a number between 1 and 5.")
-                return
-            review_text = input("Review: ")
-            review_date = 'now'  
-
-            insert_review_query = '''
-                INSERT INTO reviews (book_id, member, rating, rtext, rdate) 
-                VALUES (?, ?, ?, ?, date('now'))
-            '''
-            #so is the rid selected_borrowing[1] the bid here? 
-            executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
-
-            print("Thank you for your review!")
+                #this query treats RID as an alias for ROWID, add review
+                insert_review_query = '''
+                    INSERT INTO reviews (book_id, member, rating, rtext, rdate)  
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                '''
+                executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
+                print("Thank you for your review!")
+                break
+            elif review_decision == 'no':
+                break
+            else:
+                print("Invalid option. Please answer 'yes', 'no'.")
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")

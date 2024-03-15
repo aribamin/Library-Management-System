@@ -14,3 +14,4 @@ run: setup_db
 
 # Phony targets are not files.
 .PHONY: default setup_db run
+
