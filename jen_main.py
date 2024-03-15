@@ -127,62 +127,97 @@ def viewMemberProfile():
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
 def returnBook():
+    """
+    TO DO
+    make it so that if there isn't a valid response
+    say the say 'ye' when we ask for a review we don't execute the query assuming no review
+    reprompt.
+    """
     if LOGGED_IN_USER is None:
         print("You must be logged in to return a book.")
         return
 
     try:
-        # Fetch user's current borrowings
-        current_borrowings_query = ''' SELECT bid, books.book_id, title, start_date
+
+        # fetch user's CURRENT borrowings query
+        current_borrowings_query = ''' 
+        SELECT bid, books.book_id, title, start_date
         FROM borrowings
         JOIN books ON books.book_id = borrowings.book_id
-        WHERE member=? AND end_date IS NULL
+        WHERE member=? 
+        AND 
+        end_date IS NULL
         '''
+
+        #borrowings returns a list
         borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
+
+        #case where user has no borrowings
         if not borrowings:
             print("You have no current borrowings to return.")
             return
-
+        
+        #print borrowings and calculate the deadline of each one 
         print("Your current borrowings:")
         for borrowing in borrowings:
-            deadline_query = '''SELECT date(start_date, '+20 days') as deadline FROM borrowings WHERE bid=?'''
+
+            #get deadline query 
+            deadline_query = '''
+            SELECT date(start_date, '+20 days') as deadline 
+            FROM borrowings 
+            WHERE bid=?
+            '''
             deadline_result = executeQuery(deadline_query, (borrowing[0],))
-            deadline = deadline_result[0][0] if deadline_result else "N/A"
+
+            #extract from list 
+            if deadline_result:
+                deadline = deadline_result[0][0]
+            else:
+                deadline_result = "N/A"
+            
+            #display bid, book id, title, start date and deadline:
             print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}, Deadline: {deadline}")
 
-        #validate bid 
+        #prompt user if they want to return a book
         bid_to_return = input("Enter the borrowing ID of the book to return: ")
+
+        #find instance of borrowing
         selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
+
+        # REPROMPT INSTEAD 
         if not selected_borrowing:
             print("Invalid borrowing ID.")
             return
     
-        # Calculate overdue days
+        # calculate overdue days count for book they want to return
         overdue_days_query = '''
         SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
         FROM borrowings
         WHERE bid=?
         '''
+
         overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
+
+        #get element from list
         if overdue_days_result and overdue_days_result[0][0] > 0:
             overdue_days = overdue_days_result[0][0] 
         else:
             overdue_days = 0
         overdue_days = math.floor(overdue_days)
        
-        # Apply penalty if overdue 
-
+        # if overdue, apply penalty 
         if overdue_days > 0:
             penalty_amount = overdue_days  # $1 per overdue day
             print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.")
+
             insert_penalty_query = '''
-            INSERT INTO penalties (bid, amount, paid_amount) VALUES (?, ?, 0)
+            INSERT INTO penalties (bid, amount, paid_amount) 
+            VALUES (?, ?, 0)
             '''
             executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
             conn.commit()
 
-        # Mark the book as returned
-
+        # mark the book as returned
         return_book_query = '''
         UPDATE borrowings 
         SET end_date=date('now') 
@@ -190,11 +225,13 @@ def returnBook():
         '''
 
         executeQuery(return_book_query, (bid_to_return,))
-        conn.commit()
         print(f"Book '{selected_borrowing[2]}' returned successfully.")
 
         # Optional: Ask for a review    
         # Generate a unique ID when we insert into reviews table, 1001, or a random number that is not in the table 
+        # should work? 
+
+        #REPROMPT
         review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
         if review_decision == 'yes':
             rating = input("Rating (1-5): ")
@@ -208,8 +245,8 @@ def returnBook():
                 INSERT INTO reviews (book_id, member, rating, rtext, rdate) 
                 VALUES (?, ?, ?, ?, date('now'))
             '''
+            #so is the rid selected_borrowing[1] the bid here? 
             executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
-            conn.commit()
 
             print("Thank you for your review!")
 
