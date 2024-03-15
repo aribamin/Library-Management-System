@@ -2,6 +2,7 @@ import sqlite3
 import sys
 import getpass
 import math
+from datetime import date
 
 if len(sys.argv) != 2:
     print("Usage: python3 main.py <database_name>")
@@ -30,8 +31,11 @@ exampleQuery = 'SELECT * FROM members WHERE email=:loginEmail AND passwd=:loginP
 exampleParameters = {'loginEmail': emailVar, 'loginPasswd': passwdVar}
 executeQuery(exampleQuery, exampleParameters)
 '''
-def executeQuery(query: str, parameters: dict) -> list:
-    c.execute(query, parameters)
+def executeQuery(query, parameters) -> list:
+    if parameters is not None:
+        c.execute(query, parameters)
+    else:
+        c.execute(query)
     rows = c.fetchall()
     return rows
 
@@ -40,13 +44,13 @@ def loginUser():
     emailVar = input("Enter your email: ")
     passwordVar = getpass.getpass("Enter your password: ")
 
-    login_query = 'SELECT * FROM members WHERE email=? AND passwd=?'
-    login_parameters = (emailVar, passwordVar)
+    login_query = 'SELECT * FROM members WHERE LOWER(email)=? AND passwd=?'
+    login_parameters = (emailVar.lower(), passwordVar)
     
     user = executeQuery(login_query, login_parameters)
 
     if user:
-        print(f"Mogging awaits, {user[0][1]}!")
+        print(f"Hello, {user[0][2]}!\n")
         LOGGED_IN_USER = user[0][0]
     else:
         print("Invalid email or password. Please try again.")
@@ -146,8 +150,13 @@ def printAndSortResults(results, totalResults, pageNum):
 
 def borrowBook(bookID, booksOnScreen, borrowables):
     if bookID in borrowables:
-        print('ayo borrow this book!!!!', bookID) # SOMEONE WRITE THIS
-        # will need to do an insert into borrowings statement here
+        maxBID = executeQuery('SELECT MAX(bid) FROM borrowings;', None)[0][0]
+        
+        borrowQuery = 'INSERT INTO borrowings VALUES (?, ?, ?, ?, ?)'
+        borrowParams = (maxBID + 1, LOGGED_IN_USER, bookID, date.today(), None)
+        executeQuery(borrowQuery, borrowParams)
+        conn.commit()
+        print(f'Book {bookID} has been borrowed!')
         return True
     elif bookID in booksOnScreen:
         print('This book is currently being borrowed!')
@@ -290,6 +299,7 @@ def searchBooks(userEmail):
                     successfulBorrow = borrowBook(choice[1], booksOnScreen, borrowables)
                     if successfulBorrow:
                         printOtherText = True
+                        results = executeQuery(queryOfPain, queryParams) # Refresh to show the new book has been borrowed
                         booksOnScreen, borrowables = printAndSortResults(results, totalResults, pageNum)
                 elif choice[0] == 3: # Return to main menu
                     return
@@ -389,8 +399,8 @@ def pay_penalty(user_email):
 def doAction(action):
     if action == 'view info':
         viewMemberProfile()
-    elif action == 'view borrowings':
-        pass
+    elif action == 'return book':
+        returnBook()
     elif action == 'search books':
         searchBooks(LOGGED_IN_USER)
     elif action == 'pay penalty':
@@ -421,11 +431,11 @@ while LOGGED_IN_USER is None:
 response = ''
 validResponse = False
 while response != 'quit':
-    print("Menu: \n-view info\n-view borrowings\n-search books\n-pay penalty\n")
+    print("Menu: \n-view info\n-return book\n-search books\n-pay penalty\n")
     
     response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
     
-    if response.lower() in ['view info', 'view borrowings', 'search books', 'pay penalty']:
+    if response.lower() in ['view info', 'return book', 'search books', 'pay penalty']:
         doAction(response)
     elif response != 'quit':
         print("Invalid option")
