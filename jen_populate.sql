@@ -49,7 +49,8 @@ INSERT INTO borrowings (bid, member, book_id, start_date, end_date) VALUES
   (17, 'hinata@example.com', 10, '2024-03-30', NULL),
   -- (18, 'naruto@example.com', 2, '2024-03-05', '2024-03-25'),
   -- (19, 'sasuke@example.com', 3, '2024-02-01', '2024-02-21'),
-  (20, 'sakura@example.com', 4, '2024-03-15', NULL);
+  (20, 'sakura@example.com', 4, '2024-03-15', NULL),
+  (200, 'naruto@example.com', 5, '2024-02-04', NULL);
   -- make a case that requires upadating the penalties list: 
 
 
