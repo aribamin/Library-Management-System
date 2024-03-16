@@ -130,6 +130,140 @@ def viewMemberProfile():
 #-----------------------PART 1 ends HERE-------------------------------------------------
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
+def returnBook():
+
+    if LOGGED_IN_USER is None:
+        print("You must be logged in to return a book.")
+        return
+
+    try:
+
+        # fetch user's CURRENT borrowings query
+        current_borrowings_query = ''' 
+        SELECT bid, books.book_id, title, start_date
+        FROM borrowings
+        JOIN books ON books.book_id = borrowings.book_id
+        WHERE member=? 
+        AND 
+        end_date IS NULL
+        '''
+
+        # borrowings returns a list
+        borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
+        conn.commit()
+
+        # case where user has no borrowings
+        if not borrowings:
+            print("You have no current borrowings to return.")
+            return
+        
+        # print borrowings and calculate the deadline of each one 
+        print("Your current borrowings:")
+        for borrowing in borrowings:
+
+            #get deadline query 
+            deadline_query = '''
+            SELECT date(start_date, '+20 days') as deadline 
+            FROM borrowings 
+            WHERE bid=?
+            '''
+            deadline_result = executeQuery(deadline_query, (borrowing[0],))
+            conn.commit()
+
+            #extract from list 
+            if deadline_result:
+                deadline = deadline_result[0][0]
+            else:
+                deadline_result = "N/A"
+            
+            #display bid, book id, title, start date and deadline:
+            print(f"Borrowing ID: {borrowing[0]}, Book ID: {borrowing[1]}, Title: {borrowing[2]}, Start Date: {borrowing[3]}, Deadline: {deadline}")
+
+        # next prompt user if they want to return a book
+        bid_to_return = input("Enter the borrowing ID of the book to return: ")
+
+        #find instance of borrowing in table
+        selected_borrowing = next((b for b in borrowings if str(b[0]) == bid_to_return), None)
+
+        if not selected_borrowing:
+            print("Invalid borrowing ID.")
+            return
+    
+        # calculate overdue days count for book they want to return
+        overdue_days_query = '''
+        SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
+        FROM borrowings
+        WHERE bid=?
+        '''
+
+        # returns something like [(19.993999583180994,)] so we need next block
+        overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
+        conn.commit()
+        print(overdue_days_result)
+
+        #get element from list 
+        if overdue_days_result and overdue_days_result[0][0] > 0:
+            overdue_days = overdue_days_result[0][0] 
+        else:
+            overdue_days = 0
+        
+        #round down 
+        overdue_days = math.floor(overdue_days)
+
+        # TESTING OMIT
+        penalty_amount = overdue_days
+        print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.") 
+
+        # if overdue, apply penalty 
+        if overdue_days > 0:
+            penalty_amount = overdue_days  # $1 per overdue day
+            print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.")
+
+            insert_penalty_query = '''
+            INSERT INTO penalties (bid, amount, paid_amount) 
+            VALUES (?, ?, 0)
+            '''
+            executeQuery(insert_penalty_query, (bid_to_return, penalty_amount))
+            conn.commit()
+
+        # mark the book as returned 
+        return_book_query = '''
+        UPDATE borrowings 
+        SET end_date=date('now') 
+        WHERE bid=?
+        '''
+
+        executeQuery(return_book_query, (bid_to_return,))
+        conn.commit()
+        print(f"Book '{selected_borrowing[2]}' returned successfully.")
+
+        # ask for a review with the option to decline
+        while True:
+            review_decision = input("Would you like to leave a review for this book? (yes/no): ").lower()
+            if review_decision == 'yes':
+                rating = input("Rating (1-5): ")
+                if not rating.isdigit() or not 1 <= int(rating) <= 5:
+                    print("Invalid rating. Please enter a number between 1 and 5.")
+                    continue
+                review_text = input("Review: ")
+
+                #this query treats RID as an alias for ROWID, add review
+                insert_review_query = '''
+                    INSERT INTO reviews (book_id, member, rating, rtext, rdate)  
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                '''
+                executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
+                conn.commit()
+                print("Thank you for your review!")
+                break
+            elif review_decision == 'no':
+                break
+            else:
+                print("Invalid option. Please answer 'yes', 'no'.")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
 #-----------------------PART 2 ends HERE-------------------------------------------------
 
 #-----------------------PART 3 starts HERE-------------------------------------------------
@@ -401,6 +535,23 @@ def doAction(action):
         viewMemberProfile()
     elif action == 'return book':
         returnBook()
+        # PRINTS TABLES FOR TESTING 
+        
+        # print("\nUpdated Borrowings Table:")
+        # all_borrowings = executeQuery('SELECT * FROM borrowings', ())
+        # for borrowing in all_borrowings:
+        #     print(borrowing)
+
+        # print("\nUpdated Penalties Table:")
+        # all_penalties = executeQuery('SELECT * FROM penalties', ())
+        # for penalty in all_penalties:
+        #     print(penalty)
+
+        # print("\nUpdated Reviews Table:")
+        # all_reviews = executeQuery('SELECT * FROM reviews', ())
+        # for review in all_reviews:
+        #     print(review)
+
     elif action == 'search books':
         searchBooks(LOGGED_IN_USER)
     elif action == 'pay penalty':
