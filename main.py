@@ -189,10 +189,17 @@ def returnBook():
             print("Invalid borrowing ID.")
             return
     
-        # calculate overdue days count for book they want to return
+
+
+        # Calculate the number of overdue days, adjusted for a timezone offset of -6 hours (MDT)
         overdue_days_query = '''
-        SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
-        FROM borrowings
+        SELECT 
+            CASE 
+                WHEN julianday('now') - 0.25 - julianday(start_date) > 20 THEN 
+                    julianday('now') - 0.25 - julianday(start_date) - 20 
+                ELSE 0 
+            END as overdue_days
+        FROM borrowi
         WHERE bid=?
         '''
 
@@ -536,7 +543,7 @@ def doAction(action):
     elif action == 'return book':
         returnBook()
         # PRINTS TABLES FOR TESTING 
-        
+
         # print("\nUpdated Borrowings Table:")
         # all_borrowings = executeQuery('SELECT * FROM borrowings', ())
         # for borrowing in all_borrowings:
