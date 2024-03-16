@@ -455,7 +455,7 @@ def any_unpaid(user_email):
     Display a list of unpaid penalties for the given user or return false if there is no unpaid penalties.
     input: user_email
     """
-    unpaid_query = 'SELECT * FROM penalties WHERE bid IN ' \
+    unpaid_query = 'SELECT pid, bid, amount, COALESCE(paid_amount, 0) AS paid_amount FROM penalties WHERE bid IN ' \
                     '(SELECT bid FROM borrowings WHERE member = ?) ' \
                     'AND COALESCE(paid_amount, 0) < amount'
     unpaid_param = (user_email,)
@@ -493,7 +493,7 @@ def pay_penalty(user_email):
 
         penalty_id = int(penalty_id)
 
-        get_penalty_query = 'SELECT * FROM penalties WHERE pid = ? AND bid IN ' \
+        get_penalty_query = 'SELECT pid, bid, amount, COALESCE(paid_amount, 0) AS paid_amount FROM penalties WHERE pid = ? AND bid IN ' \
                             '(SELECT bid FROM borrowings WHERE member = ?) ' \
                             'AND COALESCE(paid_amount, 0) < amount'
         get_penalty_parameters = (penalty_id, user_email)
