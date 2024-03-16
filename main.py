@@ -190,8 +190,20 @@ def returnBook():
             return
     
         # calculate overdue days count for book they want to return
+        # overdue_days_query = '''
+        # SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
+        # FROM borrowings
+        # WHERE bid=?
+        # '''
+
+        # Calculate the number of overdue days, adjusted for a timezone offset of -6 hours (MDT)
         overdue_days_query = '''
-        SELECT julianday('now') - julianday(start_date) - 20 as overdue_days
+        SELECT 
+            CASE 
+                WHEN julianday('now') - 0.25 - julianday(start_date) > 20 THEN 
+                    julianday('now') - 0.25 - julianday(start_date) - 20 
+                ELSE 0 
+            END as overdue_days
         FROM borrowings
         WHERE bid=?
         '''
