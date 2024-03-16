@@ -20,3 +20,5 @@ Write tests for functions if time allows <- do it as group if possible, or two p
 Jared - I received some advice from a TA (Farishta) with writing my SQL query for the Search Books function, particularly with how to write the ORDER BY clause to sort the results properly.
 
 Jennifer - I received clarification from Aron Gu on calculating penalties for returning books.
+
+Arib - Asked Aron Gu questions for Part 1.
