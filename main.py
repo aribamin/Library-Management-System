@@ -495,7 +495,7 @@ def pay_penalty(user_email):
 
         get_penalty_query = 'SELECT * FROM penalties WHERE pid = ? AND bid IN ' \
                             '(SELECT bid FROM borrowings WHERE member = ?) ' \
-                            'AND paid_amount < amount'
+                            'AND COALESCE(paid_amount, 0) < amount'
         get_penalty_parameters = (penalty_id, user_email)
 
         penalty = executeQuery(get_penalty_query, get_penalty_parameters)
@@ -510,7 +510,7 @@ def pay_penalty(user_email):
             try:
                 amount_to_pay = float(amount_to_pay)
                 if 0 < amount_to_pay <= remaining_amount:
-                    update_penalty_query = 'UPDATE penalties SET paid_amount = paid_amount + ? WHERE pid = ?'
+                    update_penalty_query = 'UPDATE penalties SET paid_amount = COALESCE(paid_amount, 0) + ? WHERE pid = ?'
                     update_penalty_parameters = (amount_to_pay, penalty_id)
 
                     executeQuery(update_penalty_query, update_penalty_parameters)
