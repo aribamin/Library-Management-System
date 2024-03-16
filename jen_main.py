@@ -146,6 +146,7 @@ def returnBook():
 
         # borrowings returns a list
         borrowings = executeQuery(current_borrowings_query, (LOGGED_IN_USER,))
+        conn.commit()
 
         # case where user has no borrowings
         if not borrowings:
@@ -163,6 +164,7 @@ def returnBook():
             WHERE bid=?
             '''
             deadline_result = executeQuery(deadline_query, (borrowing[0],))
+            conn.commit()
 
             #extract from list 
             if deadline_result:
@@ -192,7 +194,8 @@ def returnBook():
 
         # returns something like [(19.993999583180994,)] so we need next block
         overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
-        # print(overdue_days_result)
+        conn.commit()
+        print(overdue_days_result)
 
         #get element from list 
         if overdue_days_result and overdue_days_result[0][0] > 0:
@@ -204,8 +207,8 @@ def returnBook():
         overdue_days = math.floor(overdue_days)
 
         # TESTING OMIT
-        # penalty_amount = overdue_days
-        # print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.") 
+        penalty_amount = overdue_days
+        print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.") 
 
         # if overdue, apply penalty 
         if overdue_days > 0:
@@ -227,6 +230,7 @@ def returnBook():
         '''
 
         executeQuery(return_book_query, (bid_to_return,))
+        conn.commit()
         print(f"Book '{selected_borrowing[2]}' returned successfully.")
 
         # ask for a review with the option to decline
@@ -245,6 +249,7 @@ def returnBook():
                     VALUES (?, ?, ?, ?, datetime('now'))
                 '''
                 executeQuery(insert_review_query, (selected_borrowing[1], LOGGED_IN_USER, rating, review_text))
+                conn.commit()
                 print("Thank you for your review!")
                 break
             elif review_decision == 'no':
