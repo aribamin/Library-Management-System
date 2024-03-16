@@ -457,7 +457,7 @@ def any_unpaid(user_email):
     """
     unpaid_query = 'SELECT * FROM penalties WHERE bid IN ' \
                     '(SELECT bid FROM borrowings WHERE member = ?) ' \
-                    'AND paid_amount < amount'
+                    'AND COALESCE(paid_amount, 0) < amount'
     unpaid_param = (user_email,)
 
     unpaid_penalties = executeQuery(unpaid_query, unpaid_param)
