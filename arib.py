@@ -2,6 +2,7 @@ import sqlite3
 import sys
 import getpass
 import math
+import datetime
 from datetime import date
 
 if len(sys.argv) != 2:
@@ -65,8 +66,12 @@ def registerUser():
         return
     try:
         birth_year = int(input("Enter your birth year: "))
-    except:
-        print("Invalid age, registration stopped.\n")
+        current_year = datetime.datetime.now().year
+        if birth_year > current_year:
+            print("Birth year cannot be in the future.")
+            return
+    except ValueError:
+        print("Invalid year format, registration stopped.\n")
         return
     faculty_name = input("Enter your faculty name: ")
     password = getpass.getpass("Create a password: ")
