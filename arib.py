@@ -556,34 +556,38 @@ def doAction(action):
 # Do not let the user through until they have logged in
 response = ''
 validResponse = False
-while LOGGED_IN_USER is None:
-    while not validResponse:
-        response = input("Would you like to login or register? ")
-        if response.lower() == 'login' or response.lower() == 'register':
-            validResponse = True
-        else:
-            print("Invalid response, type either 'login' or 'register'")
-
-    if response.lower() == 'login':
-        loginUser()
-    elif response.lower() == 'register':
-        registerUser()
-    validResponse = False
-
-# Now that they're logged in, give them access to the full options
-response = ''
-validResponse = False
-while response != 'quit':
-    print("Menu: \n-view info\n-return book\n-search books\n-pay penalty\n")
+# Replace the existing loop at the bottom of your script with this:
+while True:
+    if LOGGED_IN_USER is None:
+        response = ''
+        while response not in ['login', 'register']:
+            response = input("Would you like to login, register, or quit? ").lower()
+            if response == 'login':
+                loginUser()
+            elif response == 'register':
+                registerUser()
+            elif response == 'quit':
+                print("Exiting...")
+                conn.close()
+                sys.exit(0)
+            else:
+                print("Invalid response, type either 'login', 'register', or 'quit'")
     
-    response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
+    print("Menu: \n-view info\n-return book\n-search books\n-pay penalty\n-logout\n")
     
-    if response.lower() in ['view info', 'return book', 'search books', 'pay penalty']:
+    response = input("What would you like to do (type in the menu options or 'quit' to exit): ").lower()
+    
+    if response in ['view info', 'return book', 'search books', 'pay penalty']:
         doAction(response)
-    elif response != 'quit':
+    elif response == 'logout':
+        print("Logging out...\n")
+        LOGGED_IN_USER = None
+        continue  # This will skip the rest of the loop and go back to the login/register prompt
+    elif response == 'quit':
+        print('Exiting...')
+        break
+    else:
         print("Invalid option")
 
-print('the end')
-
-#conn.commit() # if you want to save changes to the db
-conn.close()	
+conn.close()
+	
