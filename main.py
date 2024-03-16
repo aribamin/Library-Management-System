@@ -207,7 +207,6 @@ def returnBook():
         # returns something like [(19.993999583180994,)] so we need next block
         overdue_days_result = executeQuery(overdue_days_query, (bid_to_return,))
         conn.commit()
-        print(overdue_days_result)
 
         #get element from list 
         if overdue_days_result and overdue_days_result[0][0] > 0:
@@ -220,7 +219,6 @@ def returnBook():
 
         # TESTING OMIT
         penalty_amount = overdue_days
-        print(f"Applying a penalty of ${penalty_amount} for the overdue return of '{selected_borrowing[2]}'.") 
 
         # if overdue, apply penalty 
         if overdue_days > 0:
