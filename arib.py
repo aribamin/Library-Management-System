@@ -459,7 +459,7 @@ def any_unpaid(user_email):
     if unpaid_penalties:
         print("Unpaid Penalties:")
         for penalty in unpaid_penalties:
-            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]:.2f}")
+            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]:.2f}\n")
     else:
         print("No unpaid penalties.\n")
         return False    
@@ -480,6 +480,7 @@ def pay_penalty(user_email):
             if quit.lower() == 'n':
                 print()
                 pay_penalty(user_email)
+                return
             elif quit.lower() == 'y':
                 print()
                 return
