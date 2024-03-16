@@ -120,8 +120,8 @@ def viewMemberProfile():
     # Fetch penalty information
     penalty_query = '''
     SELECT
-        (SELECT COUNT(*) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND paid_amount < amount) AS unpaid_penalties,
-        (SELECT SUM(amount - paid_amount) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND paid_amount < amount) AS total_debt
+        (SELECT COUNT(*) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND IFNULL(paid_amount, 0) < amount) AS unpaid_penalties,
+        (SELECT SUM(amount - IFNULL(paid_amount, 0)) FROM penalties p JOIN borrowings b ON p.bid=b.bid WHERE b.member=? AND IFNULL(paid_amount, 0) < amount) AS total_debt
     '''
     penalty_info = executeQuery(penalty_query, (LOGGED_IN_USER, LOGGED_IN_USER))
 
