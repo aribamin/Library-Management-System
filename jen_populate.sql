@@ -30,15 +30,15 @@ VALUES
 
 
 INSERT INTO borrowings (bid, member, book_id, start_date, end_date) VALUES
-  -- (1, 'naruto@example.com', 1, '2024-02-01', '2024-02-15'),
-  -- (2, 'naruto@example.com', 2, '2024-02-01', '2024-02-15'),
-  -- (3, 'sasuke@example.com', 2, '2024-02-05', '2024-02-20'),
-  -- (4, 'sakura@example.com', 3, '2024-02-10', '2024-02-25'),
-  -- (5, 'naruto@example.com', 1, '2024-02-17', '2024-03-01'),
+  (1, 'naruto@example.com', 1, '2024-02-01', '2024-02-15'),
+  (2, 'naruto@example.com', 2, '2024-02-01', '2024-02-15'),
+  (3, 'sasuke@example.com', 2, '2024-02-05', '2024-02-20'),
+  (4, 'sakura@example.com', 3, '2024-02-10', '2024-02-25'),
+  (5, 'naruto@example.com', 1, '2024-02-17', '2024-03-01'),
   (6, 'naruto@example.com', 1, '2024-03-05', NULL),
   (7, 'kakashi@example.com', 4, '2024-03-01', NULL),
   (8, 'hinata@example.com', 5, '2024-03-02', NULL),
-  -- (9, 'kakashi@example.com', 2, '2024-02-25', '2024-03-07'),
+  (9, 'kakashi@example.com', 2, '2024-02-25', '2024-03-07'),
   (10, 'naruto@example.com', 3, '2024-02-28', NULL),
   (11, 'naruto@example.com', 4, '2024-03-03', NULL),
   (12, 'naruto@example.com', 5, '2024-03-04', NULL),
@@ -48,11 +48,13 @@ INSERT INTO borrowings (bid, member, book_id, start_date, end_date) VALUES
   (16, 'kakashi@example.com', 9, '2024-03-25', NULL),
   (17, 'hinata@example.com', 10, '2024-03-30', NULL),
   (18, 'naruto@example.com', 2, '2024-03-05', '2024-03-25'),
-  -- (19, 'sasuke@example.com', 3, '2024-02-01', '2024-02-21'),
+  (19, 'sasuke@example.com', 3, '2024-02-01', '2024-02-21'),
   (20, 'sakura@example.com', 4, '2024-03-15', '2024-03-25'),
+  --cases that involve incuring a penalty 
   (200, 'naruto@example.com', 5, '2024-02-04', NULL),
-  (201, 'naruto@example.com', 5, '2024-02-05', NULL);
-  -- make a case that requires upadating the penalties list: 
+  (201, 'naruto@example.com', 5, '2024-02-05', NULL),
+  --exactly 20 days ago case 
+  (202, 'naruto@example.com', 1, '2024-02-24', NULL);
 
 
 INSERT INTO penalties (pid, bid, amount, paid_amount)
@@ -62,9 +64,16 @@ VALUES
   (3, 3, 8, 8);
 
 
+-- INSERT INTO reviews (rid, book_id, member, rating, rtext, rdate)
+-- VALUES 
+--   (1, 3, 'sakura@example.com', 3, 'Useful medical techniques.', '2024-02-22'),
+--   --(4, 1, 'naruto@example.com', 5, 'Believe it!', '2024-02-12'),
+--   (3, 2, 'sasuke@example.com', 4, 'Intriguing insights into the Uchiha clan.', '2024-02-18'),
+--   (2, 1, 'naruto@example.com', 3.5, 'Believe it!', '2024-04-16');
+
+-- Assuming the rdate column type is already DATETIME or equivalent
 INSERT INTO reviews (rid, book_id, member, rating, rtext, rdate)
 VALUES 
-  (1, 1, 'naruto@example.com', 5, 'Believe it!', '2024-02-12'),
-  (2, 1, 'naruto@example.com', 3.5, 'Believe it!', '2024-04-16'),
-  (3, 2, 'sasuke@example.com', 4, 'Intriguing insights into the Uchiha clan.', '2024-02-18'),
-  (4, 3, 'sakura@example.com', 3, 'Useful medical techniques.', '2024-02-22');
+  (1, 3, 'sakura@example.com', 3, 'Useful medical techniques.', '2024-02-22 10:30:00'),
+  (3, 2, 'sasuke@example.com', 4, 'Intriguing insights into the Uchiha clan.', '2024-02-18 15:45:00'),
+  (2, 1, 'naruto@example.com', 3.5, 'Believe it!', '2024-04-16 08:25:00');
