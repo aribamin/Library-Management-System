@@ -204,7 +204,7 @@ def returnBook():
                     julianday('now') - 0.25 - julianday(start_date) - 20 
                 ELSE 0 
             END as overdue_days
-        FROM borrowings
+        FROM borrowi
         WHERE bid=?
         '''
 
