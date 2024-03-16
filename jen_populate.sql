@@ -54,7 +54,7 @@ INSERT INTO borrowings (bid, member, book_id, start_date, end_date) VALUES
   (200, 'naruto@example.com', 5, '2024-02-04', NULL),
   (201, 'naruto@example.com', 5, '2024-02-05', NULL),
   --exactly 20 days ago case 
-  (202, 'naruto@example.com', 1, '2024-02-24', NULL);
+  (202, 'naruto@example.com', 1, '2024-02-25', NULL);
 
 
 INSERT INTO penalties (pid, bid, amount, paid_amount)

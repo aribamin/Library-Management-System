@@ -536,7 +536,7 @@ def doAction(action):
     elif action == 'return book':
         returnBook()
         # PRINTS TABLES FOR TESTING 
-        
+
         # print("\nUpdated Borrowings Table:")
         # all_borrowings = executeQuery('SELECT * FROM borrowings', ())
         # for borrowing in all_borrowings:

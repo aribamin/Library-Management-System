@@ -10,7 +10,7 @@ setup_db:
 
 # Target for running the main Python script.
 run: setup_db
-	python3 jen_main.py prj-database.db
+	python3 main.py prj-database.db
 
 # Phony targets are not files.
 .PHONY: default setup_db run
