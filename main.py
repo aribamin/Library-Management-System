@@ -129,7 +129,13 @@ def viewMemberProfile():
     print("\nMember Profile:")
     print(f"Name: {personal_info[0][0]}\nEmail: {personal_info[0][1]}\nBirth Year: {personal_info[0][2]}")
     print(f"Previous Borrowings: {borrowing_info[0][0]}, Current Borrowings: {borrowing_info[0][1]}, Overdue Borrowings: {borrowing_info[0][2]}")
-    print(f"Unpaid Penalties: {penalty_info[0][0]}, Total Debt on Penalties: {penalty_info[0][1] if penalty_info[0][1] else 0}\n")
+    # Process and print each penalty
+    total_penalty_amount = 0
+    for penalty in penalty_info:
+        print(f"Penalty ID: {penalty[0]}, Penalty Amount: {penalty[1]}")
+        total_penalty_amount += penalty[1]
+    
+    print(f"Total Penalty Amount: {total_penalty_amount}\n")
 #-----------------------PART 1 ends HERE-------------------------------------------------
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
