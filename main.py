@@ -188,8 +188,6 @@ def returnBook():
         if not selected_borrowing:
             print("Invalid borrowing ID.")
             return
-    
-
 
         # Calculate the number of overdue days, adjusted for a timezone offset of -6 hours (MDT)
         overdue_days_query = '''
@@ -199,7 +197,7 @@ def returnBook():
                     julianday('now') - 0.25 - julianday(start_date) - 20 
                 ELSE 0 
             END as overdue_days
-        FROM borrowi
+        FROM borrowings
         WHERE bid=?
         '''
 
