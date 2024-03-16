@@ -459,7 +459,7 @@ def any_unpaid(user_email):
     if unpaid_penalties:
         print("Unpaid Penalties:")
         for penalty in unpaid_penalties:
-            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]}")
+            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]:.2f}")
     else:
         print("No unpaid penalties.\n")
         return False    
@@ -519,13 +519,17 @@ def pay_penalty(user_email):
     else:
         return
     
-    quit = input("Back to menu? (y/n): ")
-    if quit.lower() == 'n':
-        print()
-        pay_penalty(user_email)
-    elif quit.lower() == 'y':
-        print()
-        return
+    while True:
+        quit = input("Back to menu? (y/n): ")
+        if quit.lower() == 'n':
+            print()
+            pay_penalty(user_email)
+            break  # Exit the loop after executing the function
+        elif quit.lower() == 'y':
+            print()
+            return  # Exit the function, thus ending the loop
+        else:
+            print("Please enter 'y' for yes or 'n' for no.")
 #--------------------------- PART 4 ENDS HERE --------------------------------        
         
 def doAction(action):
@@ -533,28 +537,10 @@ def doAction(action):
         viewMemberProfile()
     elif action == 'return book':
         returnBook()
-        # PRINTS TABLES FOR TESTING 
-        
-        # print("\nUpdated Borrowings Table:")
-        # all_borrowings = executeQuery('SELECT * FROM borrowings', ())
-        # for borrowing in all_borrowings:
-        #     print(borrowing)
-
-        # print("\nUpdated Penalties Table:")
-        # all_penalties = executeQuery('SELECT * FROM penalties', ())
-        # for penalty in all_penalties:
-        #     print(penalty)
-
-        # print("\nUpdated Reviews Table:")
-        # all_reviews = executeQuery('SELECT * FROM reviews', ())
-        # for review in all_reviews:
-        #     print(review)
-
     elif action == 'search books':
         searchBooks(LOGGED_IN_USER)
     elif action == 'pay penalty':
         pay_penalty(LOGGED_IN_USER)
-
 
 # -------------------------------- MAIN --------------------------------------
 
@@ -574,7 +560,6 @@ while LOGGED_IN_USER is None:
     elif response.lower() == 'register':
         registerUser()
     validResponse = False
-
 
 # Now that they're logged in, give them access to the full options
 response = ''
