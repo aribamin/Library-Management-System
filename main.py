@@ -2,6 +2,7 @@ import sqlite3
 import sys
 import getpass
 import math
+import datetime
 from datetime import date
 
 if len(sys.argv) != 2:
@@ -9,7 +10,6 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 #  ------------------------ GLOBAL VARIABLES ---------------------------------
-
 DB_PATH = sys.argv[1]
 
 conn = sqlite3.connect(DB_PATH)
@@ -17,7 +17,6 @@ c = conn.cursor()
 
 LOGGED_IN_USER = None
 # ----------------------------------------------------------------------------
-
 
 '''
 A function to execute a query giving a query and set of parameters and return
@@ -31,6 +30,7 @@ exampleQuery = 'SELECT * FROM members WHERE email=:loginEmail AND passwd=:loginP
 exampleParameters = {'loginEmail': emailVar, 'loginPasswd': passwdVar}
 executeQuery(exampleQuery, exampleParameters)
 '''
+
 def executeQuery(query, parameters) -> list:
     if parameters is not None:
         c.execute(query, parameters)
@@ -56,7 +56,6 @@ def loginUser():
         print("Invalid email or password. Please try again.")
 
 def registerUser():
-    
     name = input("Enter your name: ")
     if name == '':
         print('Name cannot be left blank, registration cancelled\n')
@@ -67,8 +66,12 @@ def registerUser():
         return
     try:
         birth_year = int(input("Enter your birth year: "))
-    except:
-        print("Invalid age, registration stopped.\n")
+        current_year = datetime.datetime.now().year
+        if birth_year > current_year:
+            print("Birth year cannot be in the future.")
+            return
+    except ValueError:
+        print("Invalid year format, registration stopped.\n")
         return
     faculty_name = input("Enter your faculty name: ")
     password = getpass.getpass("Create a password: ")
@@ -126,7 +129,7 @@ def viewMemberProfile():
     print("\nMember Profile:")
     print(f"Name: {personal_info[0][0]}\nEmail: {personal_info[0][1]}\nBirth Year: {personal_info[0][2]}")
     print(f"Previous Borrowings: {borrowing_info[0][0]}, Current Borrowings: {borrowing_info[0][1]}, Overdue Borrowings: {borrowing_info[0][2]}")
-    print(f"Unpaid Penalties: {penalty_info[0][0]}, Total Debt on Penalties: {penalty_info[0][1] if penalty_info[0][1] else 0}")
+    print(f"Unpaid Penalties: {penalty_info[0][0]}, Total Debt on Penalties: {penalty_info[0][1] if penalty_info[0][1] else 0}\n")
 #-----------------------PART 1 ends HERE-------------------------------------------------
 
 #-----------------------PART 2 starts HERE-------------------------------------------------
@@ -446,8 +449,6 @@ def searchBooks(userEmail):
         else:
             if getRetryResponse() == False:
                 return
-            
-
 #-----------------------PART 3 ends HERE-------------------------------------------------
 
 #-----------------------PART 4 starts HERE-------------------------------------------------
@@ -466,7 +467,7 @@ def any_unpaid(user_email):
     if unpaid_penalties:
         print("Unpaid Penalties:")
         for penalty in unpaid_penalties:
-            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]}")
+            print(f"Penalty ID: {penalty[0]}, Amount: ${penalty[2] - penalty[3]:.2f}\n")
     else:
         print("No unpaid penalties.\n")
         return False    
@@ -487,6 +488,7 @@ def pay_penalty(user_email):
             if quit.lower() == 'n':
                 print()
                 pay_penalty(user_email)
+                return
             elif quit.lower() == 'y':
                 print()
                 return
@@ -526,13 +528,17 @@ def pay_penalty(user_email):
     else:
         return
     
-    quit = input("Back to menu? (y/n): ")
-    if quit.lower() == 'n':
-        print()
-        pay_penalty(user_email)
-    elif quit.lower() == 'y':
-        print()
-        return
+    while True:
+        quit = input("Back to menu? (y/n): ")
+        if quit.lower() == 'n':
+            print()
+            pay_penalty(user_email)
+            break  # Exit the loop after executing the function
+        elif quit.lower() == 'y':
+            print()
+            return  # Exit the function, thus ending the loop
+        else:
+            print("Please enter 'y' for yes or 'n' for no.")
 #--------------------------- PART 4 ENDS HERE --------------------------------        
         
 def doAction(action):
@@ -540,63 +546,48 @@ def doAction(action):
         viewMemberProfile()
     elif action == 'return book':
         returnBook()
-        # PRINTS TABLES FOR TESTING 
-
-        # print("\nUpdated Borrowings Table:")
-        # all_borrowings = executeQuery('SELECT * FROM borrowings', ())
-        # for borrowing in all_borrowings:
-        #     print(borrowing)
-
-        # print("\nUpdated Penalties Table:")
-        # all_penalties = executeQuery('SELECT * FROM penalties', ())
-        # for penalty in all_penalties:
-        #     print(penalty)
-
-        # print("\nUpdated Reviews Table:")
-        # all_reviews = executeQuery('SELECT * FROM reviews', ())
-        # for review in all_reviews:
-        #     print(review)
-
     elif action == 'search books':
         searchBooks(LOGGED_IN_USER)
     elif action == 'pay penalty':
         pay_penalty(LOGGED_IN_USER)
-
 
 # -------------------------------- MAIN --------------------------------------
 
 # Do not let the user through until they have logged in
 response = ''
 validResponse = False
-while LOGGED_IN_USER is None:
-    while not validResponse:
-        response = input("Would you like to login or register? ")
-        if response.lower() == 'login' or response.lower() == 'register':
-            validResponse = True
-        else:
-            print("Invalid response, type either 'login' or 'register'")
-
-    if response.lower() == 'login':
-        loginUser()
-    elif response.lower() == 'register':
-        registerUser()
-    validResponse = False
-
-
-# Now that they're logged in, give them access to the full options
-response = ''
-validResponse = False
-while response != 'quit':
-    print("Menu: \n-view info\n-return book\n-search books\n-pay penalty\n")
+# Replace the existing loop at the bottom of your script with this:
+while True:
+    if LOGGED_IN_USER is None:
+        response = ''
+        while response not in ['login', 'register']:
+            response = input("Would you like to login, register, or quit? ").lower()
+            if response == 'login':
+                loginUser()
+            elif response == 'register':
+                registerUser()
+            elif response == 'quit':
+                print("Exiting...")
+                conn.close()
+                sys.exit(0)
+            else:
+                print("Invalid response, type either 'login', 'register', or 'quit'")
     
-    response = input("What would you like to do (type in the menu options or 'quit' to exit): ")
+    print("Menu: \n-view info\n-return book\n-search books\n-pay penalty\n-logout\n")
     
-    if response.lower() in ['view info', 'return book', 'search books', 'pay penalty']:
+    response = input("What would you like to do (type in the menu options or 'quit' to exit): ").lower()
+    
+    if response in ['view info', 'return book', 'search books', 'pay penalty']:
         doAction(response)
-    elif response != 'quit':
+    elif response == 'logout':
+        print("Logging out...\n")
+        LOGGED_IN_USER = None
+        continue  # This will skip the rest of the loop and go back to the login/register prompt
+    elif response == 'quit':
+        print('Exiting...')
+        break
+    else:
         print("Invalid option")
 
-print('the end')
-
-#conn.commit() # if you want to save changes to the db
-conn.close()	
+conn.close()
+	
