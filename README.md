@@ -1,10 +1,9 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/50dc0VUx)
-# CMPUT 291 Mini Project 1 - Winter 2024  
-Group member names and ccids (3-4 members)  
-  jgourley, Jared Gourley. <br />
-  dricmoy, Dricmoy Bhattacharjee.  <br />
-  arib1, Arib Amin. <br />
-  jennif11, Jennifer Wang <br />
+# Project 1 
+Group member names 
+  Jared Gourley. <br />
+  Dricmoy Bhattacharjee.  <br />
+  Arib Amin. <br />
+  Jennifer Wang <br />
 
 # Group work break-down strategy
 Go over submission requirements as a group <br />
@@ -15,10 +14,3 @@ Write tests for functions if time allows <- do it as group if possible, or two p
 
 # Code execution guide
 - Python3 main.py "enter db name add .db to end"
-
-# Names of anyone you have collaborated with (as much as it is allowed within the course policy) or a line saying that you did not collaborate with anyone else.  
-Jared - I received some advice from a TA (Farishta) with writing my SQL query for the Search Books function, particularly with how to write the ORDER BY clause to sort the results properly.
-
-Jennifer - I received clarification from Aron Gu on calculating penalties for returning books.
-
-Arib - Asked Aron Gu questions for Part 1.
